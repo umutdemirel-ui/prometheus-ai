@@ -15,3 +15,14 @@ test('provider errors do not leak response bodies or secrets',()=>{
 test('research URL is fixed to Wikipedia and escapes user query',()=>{
  const url=wikiUrl('test & origin=evil'); assert.equal(url.hostname,'tr.wikipedia.org');assert.equal(url.searchParams.get('gsrsearch'),'test & origin=evil');assert.equal(url.searchParams.get('origin'),null);
 });
+
+test('memory context is bounded, opt-in, and marked as untrusted data',async()=>{
+ const {validateMemories,withMemoryContext}=await import('../server/core.js');
+ const messages=[{role:'user',content:'Merhaba'}];
+ assert.deepEqual(validateMemories(undefined),[]);
+ assert.deepEqual(withMemoryContext(messages,[]),messages);
+ const context=withMemoryContext(messages,validateMemories(['Türkçe konuş']));
+ assert.equal(context[0].role,'system');assert.match(context[0].content,/talimatı/);assert.match(context[0].content,/Türkçe konuş/);assert.deepEqual(context.slice(1),messages);
+ assert.throws(()=>validateMemories(Array(6).fill('a')));
+ assert.throws(()=>validateMemories(['x'.repeat(501)]));assert.throws(()=>validateMemories([{content:'a'}]));
+});

@@ -1,5 +1,5 @@
 import express from 'express';
-import {validateMessages, validateModel, safeError, wikiUrl} from './core.js';
+import {validateMessages, validateModel, safeError, wikiUrl, validateMemories, withMemoryContext} from './core.js';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -24,7 +24,7 @@ app.get('/api/status', async (req,res) => {
 });
 app.post('/api/chat', async (req,res) => {
   let messages, model;
-  try { messages = validateMessages(req.body.messages); model = validateModel(req.body.model); } catch(e) { return res.status(400).json({error:e.message}); }
+  try { messages = withMemoryContext(validateMessages(req.body.messages), validateMemories(req.body.memories)); model = validateModel(req.body.model); } catch(e) { return res.status(400).json({error:e.message}); }
   const provider = req.body.provider;
   if (!['ollama','openai'].includes(provider)) return res.status(400).json({error:'Desteklenmeyen sağlayıcı.'});
   if (provider === 'openai' && !process.env.OPENAI_API_KEY) return res.status(400).json({error:'Sunucuda OPENAI_API_KEY yapılandırılmamış.'});
