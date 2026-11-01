@@ -68,15 +68,17 @@ Bu komut arayüzü derler ve Electron penceresini açmayı hedefler. Electron, 1
 
 Araçlar sayfasında “İzinli klasörü seç” işletim sistemi klasör seçicisini açar; listelenen veya okunan her yol için ayrı onay penceresi gösterilir. “Klasör iznini kaldır” seçimi temizler; yeniden başlatıldığında izin kalmaz. Uygulama yönetici yetkisi istemez ve sizin yerinize sistem izinlerini otomatik veremez. Mikrofon isteği uygulama onayı ve platformun işletim sistemi iznine bağlıdır; Electron üzerinde Web Speech desteği garanti edilmez. Windows/macOS/Linux cihazda doğrulanmalıdır.
 
-Paketlemeyi hedef işletim sisteminde deneyin:
+Paketlemeyi hedef işletim sisteminde deneyin; parametresiz komut çalışan bilgisayarın platform ve mimarisini kullanır:
 
 ```bash
+npm run desktop:package
+# İsteğe bağlı açık hedefler (ilgili işletim sisteminde çalıştırın):
 npm run desktop:package -- --platform=linux --arch=x64
 npm run desktop:package -- --platform=win32 --arch=x64
 npm run desktop:package -- --platform=darwin --arch=arm64
 ```
 
-Çıktı `release/` altında uygulama klasörüdür; kurulum sihirbazı, imzalama ve macOS notarization henüz yoktur. Paketleme `.env` dosyasını kopyalamaz; yalnızca derleme sırasında Vite'a verilen public Supabase URL ve anon anahtarı istemciye dahil edilir. Linux'ta dağıtımınızın Electron için GTK, NSS, ses ve grafik kütüphaneleri ile çalışan bir görüntü sunucusu sağlaması gerekir. Ortamdaki Electron indirimi TLS/ağ hatasıyla başarısız olduğundan bu komutlar burada native paket üretimiyle doğrulanamadı.
+Çıktı `release/` altında uygulama klasörüdür (Windows: `Prometheus.exe`, macOS: `Prometheus.app`, Linux: `Prometheus`); kurulum sihirbazı, imzalama ve macOS notarization henüz yoktur. Paketleme bağımlılıkları kilit dosyasından `npm ci --omit=dev` ile kurar ve `.env` dosyasını kopyalamaz; yalnızca derleme sırasında Vite'a verilen public Supabase URL ve anon anahtarı istemciye dahil edilir. Linux'ta dağıtımınızın Electron için GTK, NSS, ses ve grafik kütüphaneleri ile çalışan bir görüntü sunucusu sağlaması gerekir. Bu çalışma ortamında Electron indirmesi TLS/ağ hatasıyla başarısız olduğundan bu komutlar burada native paket üretimiyle doğrulanamadı. Electron indirme adresine güvenilir TLS erişimi bulunan bir bilgisayarda çalıştırın; TLS doğrulamasını kapatmayın.
 
 Supabase Auth Redirect URLs listesine `http://127.0.0.1:46321/**` ekleyin. Masaüstü kayıt doğrulama bağlantısı sistem tarayıcısında açılır; doğrulamanın ardından masaüstü penceresinde tekrar giriş yapmak gerekebilir. Gerçek e-posta doğrulama akışı bu ortamda uçtan uca test edilmedi.
 
