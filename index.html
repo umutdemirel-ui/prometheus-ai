@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0c0b10" />
+  <meta name="description" content="Prometheus — kişisel yapay zekâ asistanı arayüzü" />
+  <title>Prometheus — Kişisel Asistan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#home" aria-label="Prometheus ana sayfa"><span class="brand-mark">ϟ</span><span>Prometheus</span></a>
+      <div class="side-label">ÇALIŞMA ALANI</div>
+      <nav class="nav-list" aria-label="Ana menü">
+        <button class="nav-item active" data-page="home"><span class="nav-icon">⌂</span><span>Ana Sayfa</span></button>
+        <button class="nav-item" data-page="voice"><span class="nav-icon">◉</span><span>Sesli Asistan</span></button>
+        <button class="nav-item" data-page="research"><span class="nav-icon">⌕</span><span>Derin Araştırma</span><span class="nav-tag">BETA</span></button>
+        <button class="nav-item" data-page="tools"><span class="nav-icon">▦</span><span>Araçlar</span></button>
+        <button class="nav-item" data-page="tasks"><span class="nav-icon">◷</span><span>Görevler</span></button>
+        <button class="nav-item" data-page="history"><span class="nav-icon">↺</span><span>Geçmiş</span></button>
+      </nav>
+      <div class="side-label settings-label">TERCİHLER</div>
+      <nav class="nav-list">
+        <button class="nav-item" data-page="personalize"><span class="nav-icon">◈</span><span>Kişiselleştirme</span></button>
+        <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span><span>Ayarlar</span></button>
+        <button class="nav-item" data-page="privacy"><span class="nav-icon">◇</span><span>Gizlilik ve izinler</span></button>
+        <button class="nav-item" data-page="about"><span class="nav-icon">ⓘ</span><span>Hakkında</span></button>
+      </nav>
+      <div class="sidebar-bottom"><div class="online-dot"></div><div><strong>Yerel arayüz hazır</strong><small>v0.1.0 · Önizleme</small></div><button class="more-btn" aria-label="Daha fazla">···</button></div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar"><button class="mobile-menu" id="menuToggle" aria-label="Menüyü aç">☰</button><div class="breadcrumb">Çalışma alanı <span>/</span> <b id="currentSection">Ana Sayfa</b></div><div class="top-actions"><button class="icon-button" id="themeToggle" title="Açık/koyu tema" aria-label="Temayı değiştir">☼</button><button class="user-avatar" title="Profil">A</button></div></header>
+      <div class="page-content" id="pageContent"></div>
+      <footer class="footer"><span>Prometheus <span class="muted">· Kişisel asistanın</span></span><span><i class="online-dot"></i> Sistem hazır</span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
