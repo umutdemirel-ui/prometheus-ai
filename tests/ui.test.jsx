@@ -34,3 +34,10 @@ test('model proposal must be manually transferred and executed after review',asy
  fireEvent.click(await screen.findByRole('button',{name:'Bu planı forma aktar'}));expect(screen.getByDisplayValue('docs')).toBeTruthy();expect(fake.mock.calls.filter(([url])=>url==='/api/desktop/execute')).toHaveLength(0);
  fireEvent.change(screen.getByPlaceholderText(/oturuma özel anahtar/),{target:{value:'a'.repeat(64)}});fireEvent.click(screen.getByRole('button',{name:'İşlemi iste'}));await screen.findByText('Klasör boş.');expect(fake.mock.calls.filter(([url])=>url==='/api/desktop/execute')).toHaveLength(1);
 });
+test('desktop file operations require native folder selection and approval bridge',async()=>{
+ const desktop={chooseDirectory:vi.fn(async()=>({name:'Belgeler'})),execute:vi.fn(async()=>({kind:'read',content:'İzinli içerik',bytes:14})),clearDirectory:vi.fn(async()=>{})};vi.stubGlobal('prometheusDesktop',desktop);
+ vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>({ollama:false,models:[],openaiConfigured:false,desktopHelperEnabled:true})})));
+ render(<App/>);fireEvent.click(screen.getByRole('button',{name:'Araçlar'}));expect(screen.getByRole('button',{name:'İşlemi iste'})).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'İzinli klasörü seç'}));await screen.findByText('Seçili: Belgeler');
+ fireEvent.change(screen.getByDisplayValue('Klasörü listele'),{target:{value:'read'}});fireEvent.change(screen.getByPlaceholderText('ör. notlar.txt'),{target:{value:'notlar.txt'}});fireEvent.click(screen.getByRole('button',{name:'İşlemi iste'}));await screen.findByText('İzinli içerik');expect(desktop.execute).toHaveBeenCalledWith({action:'read',path:'notlar.txt'});
+ fireEvent.click(screen.getByRole('button',{name:'Klasör iznini kaldır'}));await waitFor(()=>expect(screen.getByRole('button',{name:'İşlemi iste'})).toBeDisabled());expect(desktop.clearDirectory).toHaveBeenCalledOnce();
+});

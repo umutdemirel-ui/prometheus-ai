@@ -10,7 +10,9 @@
     "build": "vite build",
     "test": "node --test tests/*.test.js && vitest run",
     "start": "node --env-file-if-exists=.env server/index.js",
-    "desktop-helper": "node desktop-helper/index.js"
+    "desktop-helper": "node desktop-helper/index.js",
+    "desktop": "npm run build && electron .",
+    "desktop:package": "npm run build && node scripts/package-desktop.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
@@ -22,10 +24,13 @@
     "vite": "^6.1.0"
   },
   "devDependencies": {
+    "@electron/packager": "^20.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^45.2.1",
     "jsdom": "^25.0.1",
     "vitest": "^5.0.5"
-  }
+  },
+  "main": "desktop/main.js"
 }

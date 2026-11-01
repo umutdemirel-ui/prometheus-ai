@@ -1,10 +1,10 @@
 # Prometheus
 
-Türkçe öncelikli, yerel Ollama ile sohbet edebilen kişisel asistanın **erken web sürümü**. Bu depo tam özellikli bir masaüstü/mobil asistan değildir; aşağıdaki sınırlar geçerlidir.
+Türkçe öncelikli, yerel Ollama ile sohbet edebilen kişisel asistanın erken sürümü. Web arayüzü ve Electron masaüstü kabuğu kaynak kodu içerir; native paket bu ortamda oluşturulup çalıştırılamamıştır ve uygulama henüz tam özellikli değildir. Aşağıdaki sınırlar geçerlidir.
 
 ## Gereksinimler ve çalıştırma
 
-- Node.js 22 veya üzeri ve npm.
+- Node.js 22.12 veya üzeri ve npm. Masaüstü için Electron ikilisini indirebilen ağ bağlantısı ve hedef işletim sisteminin grafik bağımlılıkları gerekir.
 - Yerel sohbet için [Ollama](https://ollama.com/download), çalışan sunucu ve kullanıcının kendi seçip kurduğu bir model. Örnek: `ollama pull llama3.2` (model indirmek kullanıcı tarafından başlatılır).
 - İsteğe bağlı: Supabase projesi; OpenAI uyumlu sağlayıcı anahtarı.
 
@@ -43,20 +43,46 @@ Migration tüm tablolarda RLS uygular; mesaj ve konuşma sahipliği ayrıca bile
 - Tarayıcı Web Speech API üzerinden tek seferlik Türkçe konuşma tanıma ve isteğe bağlı konuşma sentezi. Destek, sesin nerede işlendiği ve mikrofon izinleri tarayıcıya bağlıdır; yerel/çevrimdışı tanıma garantisi yoktur. Sürekli dinleme yoktur.
 - Sunucu üzerinden Türkçe Vikipedi araması ve gerçek sayfa giriş metinleri; bağlantılı raporu Markdown olarak indirme. Bu bir başlangıç kaynak araştırmasıdır: kapsamlı web araması, doğrulama, çelişki analizi ve model tarafından sentezleme **yapmaz**.
 - Araştırma görevi için oturum içi durum ve iptal. Sohbetler ve tercihler tarayıcının localStorage alanında tutulur. Giriş yapan kullanıcı sohbetin bir anlık görüntüsünü açık onayla buluta kopyalayabilir, diğer cihazda listeleyip içe aktarabilir veya bulut kopyasını kalıcı silebilir. Yerel ve bulut silme ayrıdır; bu otomatik senkronizasyon veya çatışma çözümü değildir. Görünüm/ses tercihleri ayrı onaylarla buluta yazılabilir veya cihazda uygulanabilir; sağlayıcı/model ve anahtarlar aktarılmaz. Supabase hafızaları giriş yapmış kullanıcının projesinde tutulur. Kullanıcı onaylarsa seçilmiş kayıtlar sohbet bağlamına eklenir. Sohbet ve hafıza ayrı silinir; hafızayı silmek önceki yanıtlardaki tekrarlarını silmez.
-- Yerel yardımcı ayrı bir terminalde açıkça etkinleştirilirse, belirlenen klasörde dizin listeleme ve en fazla 64 KB UTF-8 dosya okuma. Her işlem için yerel terminal onayı gerekir; dosyalar otomatik olarak modele veya buluta gönderilmez.
+- Electron kabuğu kaynak kodunda işletim sistemi klasör seçimi ve her işlem için ayrı onay; web sürümünde isteğe bağlı terminal yardımcısı. İkisi de yalnızca belirlenen klasörde dizin listeleme ve en fazla 64 KB UTF-8 dosya okumayı hedefler; dosyalar otomatik olarak modele veya buluta gönderilmez.
 - Hata mesajları, testler ve RLS migration dosyası.
 
 ## Bilinen önemli eksikler
 
-- Windows/macOS/Linux için Tauri/Electron kabuğu veya Android/iOS için native paket **yoktur**; yalnızca uyumlu web arayüzü vardır. Bu platformlarda native derleme ve cihaz testleri yapılmadı.
-- Yerel yardımcı yalnızca elle istenen klasör listeleme ve metin okuma işlemlerini destekler. Modelin önerdiği JSON plan kullanıcı tarafından incelenip forma aktarılabilir; otomatik araç yürütme, dosya yazma/silme, program açma/kapama, tarayıcı otomasyonu, sistem ayarları ve çok adımlı otonom görev yürütücüsü uygulanmadı. Model çıktıları işletim sistemi komutu olarak çalıştırılmaz.
+- Electron masaüstü kabuğu kaynak kodu mevcut olsa da bu ortamda Electron indirmesi sertifika/ağ engeli nedeniyle başarısız oldu. Windows, macOS ve Linux için native uygulama/paket ve mikrofon akışları cihazda çalıştırılıp doğrulanmadı. Android/iOS için native paket yoktur.
+- Masaüstü ve yerel yardımcı yalnızca elle istenen klasör listeleme ve metin okuma işlemlerini hedefler. Modelin önerdiği JSON plan kullanıcı tarafından incelenip forma aktarılabilir; otomatik araç yürütme, dosya yazma/silme, program açma/kapama, tarayıcı otomasyonu, sistem ayarları ve çok adımlı otonom görev yürütücüsü uygulanmadı. Model çıktıları işletim sistemi komutu olarak çalıştırılmaz.
 - Sohbet ve tercih aktarımı manueldir; görevler ve raporların Supabase üzerinden eşitlenmesi yoktur. Görev geçmişi sayfa yenilenince kaybolur. Hesap silme akışı ve sunucu tarafı kapsamlı veri dışa aktarma yoktur; indirme sadece arayüzde görünen yerel geçmiş, ayar ve yüklenmiş hafızaları içerir.
 - Mikrofon cihazı seçimi, ses seviyesi, kapsamlı dil/arka plan/panel yerleşimi ayarları, model indirme arayüzü, yanıt akışı, sağlayıcı model listesi ve bağımsız sağlayıcı bağlantı testi yoktur.
 - Gerçek Supabase projesinde şema, RLS politikaları ve geri alınan iki kullanıcılı veritabanı testi doğrulandı; bu çalışma ortamından Supabase Auth/REST HTTP erişimi kısıtlı olduğundan tarayıcı üzerinden uçtan uca giriş test edilmedi. Gerçek Ollama, OpenAI veya Wikipedia bağlantıları doğrulanmadı. Testlerde kullanılan sahte Ollama gerçek servis doğrulaması değildir.
 
+## Masaüstü uygulaması (Electron, erken sürüm)
+
+Kendi bilgisayarınızda grafik oturumu ve internete erişim bulunan bir terminalden:
+
+```bash
+npm ci
+# İsteğe bağlı: Supabase'in public URL/anon anahtarını .env içine yazın.
+npm run desktop
+```
+
+Bu komut arayüzü derler ve Electron penceresini açmayı hedefler. Electron, 127.0.0.1:46321 üzerinde yalnızca yerel bir API başlatır; port doluysa uygulama hata verir. Her açılışta API için rastgele oturum anahtarı üretilir ve anahtar yalnızca masaüstü penceresinin isteklerine eklenir. API anahtarlarını `.env` içine VITE_ adıyla koymayın; OpenAI uyumlu anahtar yalnızca sunucu sürecinin `OPENAI_API_KEY` ortam değişkeniyle kullanılabilir. İşletim sistemi güvenli anahtar kasasına kayıt henüz uygulanmadı.
+
+Araçlar sayfasında “İzinli klasörü seç” işletim sistemi klasör seçicisini açar; listelenen veya okunan her yol için ayrı onay penceresi gösterilir. “Klasör iznini kaldır” seçimi temizler; yeniden başlatıldığında izin kalmaz. Uygulama yönetici yetkisi istemez ve sizin yerinize sistem izinlerini otomatik veremez. Mikrofon isteği uygulama onayı ve platformun işletim sistemi iznine bağlıdır; Electron üzerinde Web Speech desteği garanti edilmez. Windows/macOS/Linux cihazda doğrulanmalıdır.
+
+Paketlemeyi hedef işletim sisteminde deneyin:
+
+```bash
+npm run desktop:package -- --platform=linux --arch=x64
+npm run desktop:package -- --platform=win32 --arch=x64
+npm run desktop:package -- --platform=darwin --arch=arm64
+```
+
+Çıktı `release/` altında uygulama klasörüdür; kurulum sihirbazı, imzalama ve macOS notarization henüz yoktur. Paketleme `.env` dosyasını kopyalamaz; yalnızca derleme sırasında Vite'a verilen public Supabase URL ve anon anahtarı istemciye dahil edilir. Linux'ta dağıtımınızın Electron için GTK, NSS, ses ve grafik kütüphaneleri ile çalışan bir görüntü sunucusu sağlaması gerekir. Ortamdaki Electron indirimi TLS/ağ hatasıyla başarısız olduğundan bu komutlar burada native paket üretimiyle doğrulanamadı.
+
+Supabase Auth Redirect URLs listesine `http://127.0.0.1:46321/**` ekleyin. Masaüstü kayıt doğrulama bağlantısı sistem tarayıcısında açılır; doğrulamanın ardından masaüstü penceresinde tekrar giriş yapmak gerekebilir. Gerçek e-posta doğrulama akışı bu ortamda uçtan uca test edilmedi.
+
 ## İsteğe bağlı yerel dosya yardımcısı
 
-Bu özellik yalnızca sunucu ve yardımcının kullanıcının kendi bilgisayarında çalıştığı durum içindir. Bulut önizleme sunucusu, tarayıcınızı açtığınız bilgisayarın dosyalarına erişemez. **Yardımcı anahtarını uzak veya paylaşılan bir önizlemeye girmeyin.** Yardımcı varsayılan olarak kapalıdır.
+Bu terminal yardımcısı web sürümü içindir; Electron içindeki klasör seçimi ayrı bir yoldur. Bu özellik yalnızca sunucu ve yardımcının kullanıcının kendi bilgisayarında çalıştığı durum içindir. Bulut önizleme sunucusu, tarayıcınızı açtığınız bilgisayarın dosyalarına erişemez. **Yardımcı anahtarını uzak veya paylaşılan bir önizlemeye girmeyin.** Yardımcı varsayılan olarak kapalıdır.
 
 İki yerel terminal açın; yalnızca erişilmesini istediğiniz bir klasörü seçin:
 
@@ -96,4 +122,6 @@ npm run build
 npm audit
 ```
 
-Node testleri doğrulama, hata mesajları, köken kontrolü, sahte Ollama ile API bağlantısını, yerel yardımcı yol/izin denetimlerini ve sahte Supabase adaptörüyle senkronizasyon kurallarını; jsdom testleri temel gezinme ve ayar kalıcılığını kapsar. Bunlar gerçek mobil/masaüstü cihaz, mikrofon, internet araştırması, gerçek Supabase RLS veya gerçek sağlayıcı entegrasyon testlerinin yerine geçmez.
+Node testleri doğrulama, hata mesajları, köken kontrolü, sahte Ollama ile API bağlantısını, yerel yardımcı ve masaüstü izin/IPC mantığını ve sahte Supabase adaptörüyle senkronizasyon kurallarını; jsdom testleri temel gezinme ve ayar kalıcılığını kapsar. Bunlar gerçek mobil/masaüstü cihaz, mikrofon, internet araştırması, gerçek Supabase RLS veya gerçek sağlayıcı entegrasyon testlerinin yerine geçmez.
+
+Not: `npm audit --omit=dev` üretim bağımlılıklarında açık bildirmedi. `npm audit`, Electron paketleme aracının geliştirme bağımlılıklarında 5 orta seviyeli uyarı bildirdi; paketleme araçları ayrıca güncellenip doğrulanmalıdır.
