@@ -96,7 +96,7 @@ export function App(){
   if(!confirm(warning))return;setSyncBusy(true);setSyncMessage('');
   try{if(direction==='up'){await uploadPreferences(cloud,session.user.id,settings);setSyncMessage('Tercihler buluta kaydedildi.')}else{const data=await loadPreferences(cloud,session.user.id);if(!data)throw Error('Bulutta kayıtlı tercih bulunamadı.');setSettings(s=>({...s,...data}));setSyncMessage('Bulut tercihleri bu cihaza uygulandı.')}}catch(e){setError(e.message)}finally{setSyncBusy(false)}
  }
- async function auth(signup){setAuthMessage('');const {error,data}=signup?await cloud.auth.signUp({email,password}):await cloud.auth.signInWithPassword({email,password});setAuthMessage(error?error.message:signup&&!data.session?'E-posta doğrulama bağlantısını kontrol edin.':'İşlem başarılı.');if(!error)setPassword('')}
+ async function auth(signup){setAuthMessage('');const {error,data}=signup?await cloud.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin}}):await cloud.auth.signInWithPassword({email,password});setAuthMessage(error?error.message:signup&&!data.session?'E-posta doğrulama bağlantısını kontrol edin.':'İşlem başarılı.');if(!error)setPassword('')}
  const active=nav.flatMap(x=>x.items).find(x=>x[0]===page);const pageTitle=active?.[1]|| (page==='voice'?'Sesli Asistan':'Ayarlar');
  const selectPage=p=>{setPage(p);setSidebar(false);setError('')};
  const reportText=report?`# ${report.query}\n\nBu rapor Türkçe Vikipedi arama sonuçlarının giriş metinlerinden oluşur. Bağımsız doğrulama yapılmamıştır.\n\n${report.sources.map((s,i)=>`## ${i+1}. ${s.title}\n${s.extract}\n\nKaynak: ${s.url}`).join('\n\n')}`:'';

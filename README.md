@@ -30,11 +30,11 @@ npm start
 ## Supabase
 
 1. Bir Supabase projesi açın; Auth e-posta yöntemini projenizde yapılandırın.
-2. `supabase/migrations/` klasöründeki iki SQL dosyasını tarih sırasıyla Supabase SQL Editor'de veya Supabase CLI migration mekanizmasıyla uygulayın. Mevcut kurulumlarda yeni `20261101010000_conversation_snapshots.sql` migration'ını da uygulayın.
+2. `supabase/migrations/` klasöründeki SQL dosyalarını tarih sırasıyla Supabase SQL Editor'de veya Supabase CLI migration mekanizmasıyla uygulayın.
 3. Proje URL'sini ve **anon/publishable** anahtarını `.env` içinde `VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` alanlarına yazın. **Service-role anahtarını istemciye koymayın.**
-4. Uygulamayı yeniden başlatın, Ayarlar'dan hesap oluşturun/giriş yapın. E-posta doğrulaması proje ayarlarına bağlıdır. Hafıza Merkezi'nden açıkça bilgi ekleyin, arayın, düzenleyin veya kalıcı olarak silin.
+4. Uygulamayı yeniden başlatın, Ayarlar'dan hesap oluşturun/giriş yapın. E-posta doğrulaması proje ayarlarına bağlıdır. Supabase Auth URL Configuration bölümünde uygulamanın adresini Site URL ve Redirect URLs listesine ekleyin. Önizleme adresi değişirse yeni adresi eklemeniz gerekir. Hafıza Merkezi'nden açıkça bilgi ekleyin, arayın, düzenleyin veya kalıcı olarak silin.
 
-Migration tüm tablolarda RLS uygular; mesaj ve konuşma sahipliği ayrıca bileşik yabancı anahtarla eşleştirilir. Gerçek bir Supabase projesinde migration ve farklı kullanıcılarla RLS testleri ayrıca yapılmalıdır. Tablo şemasının bulunması, tüm tabloların uygulama tarafından kullanıldığı anlamına gelmez: Auth, `memories`, sohbet kopyaları ve görünüm/ses tercihleri bağlıdır. Hafıza otomatik gönderilmez: Hafıza Merkezi’nde en fazla beş kayıt seçilip mevcut model ve sağlayıcı için açıkça onaylanırsa sonraki sohbet isteklerine eklenir. Paylaşım kapatılabilir; seçim, oturum veya model/sağlayıcı değişirse onay sıfırlanır. Her kayıt en fazla 500 karakterdir. Model bu bilgileri yanıtında tekrar edebilir; yanıtlar sohbet geçmişine kaydedilebilir. Kayıtlar veri olarak işaretlenir ama istem enjeksiyonuna karşı model davranışı garanti edilemez.
+Migration tüm tablolarda RLS uygular; mesaj ve konuşma sahipliği ayrıca bileşik yabancı anahtarla eşleştirilir. Migration’ları hedef projeye uyguladıktan sonra `tests/supabase-rls.integration.sql` dosyasını test projesinin SQL Editor’ünde çalıştırabilirsiniz; test geçici kullanıcı ve verileri transaction sonunda geri alır. Daha önce eski `20261101000000`/`20261101010000` sürüm numaralarıyla migration uyguladıysanız, CLI kullanmadan önce migration geçmişini yedekleyip Supabase migration repair yöntemiyle uzlaştırın; aynı tabloları tekrar oluşturmayın. Tablo şemasının bulunması, tüm tabloların uygulama tarafından kullanıldığı anlamına gelmez: Auth, `memories`, sohbet kopyaları ve görünüm/ses tercihleri bağlıdır. Hafıza otomatik gönderilmez: Hafıza Merkezi’nde en fazla beş kayıt seçilip mevcut model ve sağlayıcı için açıkça onaylanırsa sonraki sohbet isteklerine eklenir. Paylaşım kapatılabilir; seçim, oturum veya model/sağlayıcı değişirse onay sıfırlanır. Her kayıt en fazla 500 karakterdir. Model bu bilgileri yanıtında tekrar edebilir; yanıtlar sohbet geçmişine kaydedilebilir. Kayıtlar veri olarak işaretlenir ama istem enjeksiyonuna karşı model davranışı garanti edilemez.
 
 ## Bu sürümde çalışanlar
 
@@ -51,7 +51,7 @@ Migration tüm tablolarda RLS uygular; mesaj ve konuşma sahipliği ayrıca bile
 - Bilgisayar kontrolü, yapılandırılmış araç çağrıları, dosya/uygulama kontrolü, onay sistemi ve çok adımlı otonom görev yürütücüsü uygulanmadı. Model çıktıları işletim sistemi komutu olarak çalıştırılmaz.
 - Sohbet ve tercih aktarımı manueldir; görevler ve raporların Supabase üzerinden eşitlenmesi yoktur. Görev geçmişi sayfa yenilenince kaybolur. Hesap silme akışı ve sunucu tarafı kapsamlı veri dışa aktarma yoktur; indirme sadece arayüzde görünen yerel geçmiş, ayar ve yüklenmiş hafızaları içerir.
 - Mikrofon cihazı seçimi, ses seviyesi, kapsamlı dil/arka plan/panel yerleşimi ayarları, model indirme arayüzü, yanıt akışı, sağlayıcı model listesi ve bağımsız sağlayıcı bağlantı testi yoktur.
-- Gerçek Ollama, Supabase, OpenAI veya Wikipedia bağlantıları bu ortamda doğrulanmadı. Testlerde kullanılan sahte Ollama gerçek servis doğrulaması değildir.
+- Gerçek Supabase projesinde şema, RLS politikaları ve geri alınan iki kullanıcılı veritabanı testi doğrulandı; bu çalışma ortamından Supabase Auth/REST HTTP erişimi kısıtlı olduğundan tarayıcı üzerinden uçtan uca giriş test edilmedi. Gerçek Ollama, OpenAI veya Wikipedia bağlantıları doğrulanmadı. Testlerde kullanılan sahte Ollama gerçek servis doğrulaması değildir.
 
 ## Güvenlik ve gizlilik
 
