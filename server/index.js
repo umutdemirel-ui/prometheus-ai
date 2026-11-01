@@ -48,13 +48,17 @@ app.post('/api/chat', async (req,res) => {
 app.post('/api/research', async (req,res) => {
   const query = req.body.query;
   if (typeof query !== 'string' || query.trim().length < 3 || query.length > 300) return res.status(400).json({error:'3–300 karakterlik bir konu girin.'});
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  res.on('close', () => controller.abort());
   try {
-    const response = await request(wikiUrl(query.trim()));
+    const response = await request(wikiUrl(query.trim()), {signal:controller.signal});
     if (!response.ok) throw new Error('search failed');
     const data = await response.json();
     const sources = (data.query?.pages || []).filter(p=>p.extract && p.fullurl).map(p=>({title:p.title,url:p.fullurl,extract:p.extract}));
     res.json({sources});
-  } catch { res.status(502).json({error:'Vikipedi kaynağına ulaşılamadı. İnternet bağlantısını kontrol edin.'}); }
+  } catch { if (!res.headersSent) res.status(502).json({error:'Vikipedi kaynağına ulaşılamadı. İnternet bağlantısını kontrol edin.'}); }
+  finally { clearTimeout(timeout); }
 });
 if (existsSync('dist')) app.use(express.static('dist'));
 app.get('*', (req,res) => { if (existsSync('dist/index.html')) res.sendFile(join(process.cwd(),'dist/index.html')); else res.status(404).send('Önce npm run build çalıştırın.'); });
