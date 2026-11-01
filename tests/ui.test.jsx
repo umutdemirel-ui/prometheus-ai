@@ -24,3 +24,13 @@ test('multiple turns update a single local conversation instead of duplicating s
  await waitFor(()=>expect(JSON.parse(localStorage.getItem('prometheus-history'))?.[0]?.messages?.length).toBe(4));
  expect(JSON.parse(localStorage.getItem('prometheus-history'))).toHaveLength(1);
 });
+test('local helper is disabled unless the server explicitly enables it',async()=>{
+ render(<App/>);fireEvent.click(screen.getByRole('button',{name:'Araçlar'}));expect(screen.getByText(/Yalnızca kendi bilgisayarındaki yerel kurulumda kullan/)).toBeTruthy();expect(screen.getByRole('button',{name:'İşlemi iste'})).toBeDisabled();
+});
+test('model proposal must be manually transferred and executed after review',async()=>{
+ localStorage.setItem('prometheus-settings',JSON.stringify({model:'test:1'}));
+ const fake=vi.fn(async(url)=>url==='/api/desktop/plan'?{ok:true,json:async()=>({action:'list',path:'docs'})}:url==='/api/desktop/execute'?{ok:true,json:async()=>({kind:'list',entries:[],truncated:false})}:{ok:true,json:async()=>({ollama:true,models:['test:1'],openaiConfigured:false,desktopHelperEnabled:true})});vi.stubGlobal('fetch',fake);
+ render(<App/>);fireEvent.click(screen.getByRole('button',{name:'Araçlar'}));fireEvent.change(screen.getByPlaceholderText('Örn. notlar klasörünü listele'),{target:{value:'Belgeleri listele'}});await waitFor(()=>expect(screen.getByRole('button',{name:/AI ile planla/})).toBeEnabled());fireEvent.click(screen.getByRole('button',{name:/AI ile planla/}));
+ fireEvent.click(await screen.findByRole('button',{name:'Bu planı forma aktar'}));expect(screen.getByDisplayValue('docs')).toBeTruthy();expect(fake.mock.calls.filter(([url])=>url==='/api/desktop/execute')).toHaveLength(0);
+ fireEvent.change(screen.getByPlaceholderText(/oturuma özel anahtar/),{target:{value:'a'.repeat(64)}});fireEvent.click(screen.getByRole('button',{name:'İşlemi iste'}));await screen.findByText('Klasör boş.');expect(fake.mock.calls.filter(([url])=>url==='/api/desktop/execute')).toHaveLength(1);
+});
