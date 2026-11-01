@@ -30,11 +30,11 @@ npm start
 ## Supabase
 
 1. Bir Supabase projesi açın; Auth e-posta yöntemini projenizde yapılandırın.
-2. `supabase/migrations/20261101000000_initial.sql` dosyasını Supabase SQL Editor'de veya Supabase CLI migration mekanizmasıyla uygulayın.
+2. `supabase/migrations/` klasöründeki iki SQL dosyasını tarih sırasıyla Supabase SQL Editor'de veya Supabase CLI migration mekanizmasıyla uygulayın. Mevcut kurulumlarda yeni `20261101010000_conversation_snapshots.sql` migration'ını da uygulayın.
 3. Proje URL'sini ve **anon/publishable** anahtarını `.env` içinde `VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` alanlarına yazın. **Service-role anahtarını istemciye koymayın.**
 4. Uygulamayı yeniden başlatın, Ayarlar'dan hesap oluşturun/giriş yapın. E-posta doğrulaması proje ayarlarına bağlıdır. Hafıza Merkezi'nden açıkça bilgi ekleyin, arayın, düzenleyin veya kalıcı olarak silin.
 
-Migration tüm tablolarda RLS uygular; mesaj ve konuşma sahipliği ayrıca bileşik yabancı anahtarla eşleştirilir. Gerçek bir Supabase projesinde migration ve farklı kullanıcılarla RLS testleri ayrıca yapılmalıdır. Tablo şemasının bulunması, tüm tabloların uygulama tarafından kullanıldığı anlamına gelmez: şu anda yalnızca Auth ve `memories` bağlıdır. Hafıza otomatik olarak modele bağlam olarak gönderilmez.
+Migration tüm tablolarda RLS uygular; mesaj ve konuşma sahipliği ayrıca bileşik yabancı anahtarla eşleştirilir. Gerçek bir Supabase projesinde migration ve farklı kullanıcılarla RLS testleri ayrıca yapılmalıdır. Tablo şemasının bulunması, tüm tabloların uygulama tarafından kullanıldığı anlamına gelmez: Auth, `memories`, sohbet kopyaları ve görünüm/ses tercihleri bağlıdır. Hafıza otomatik olarak modele bağlam olarak gönderilmez.
 
 ## Bu sürümde çalışanlar
 
@@ -42,14 +42,14 @@ Migration tüm tablolarda RLS uygular; mesaj ve konuşma sahipliği ayrıca bile
 - Ollama model listesi/bağlantı durumu ve sohbet; isteğe bağlı OpenAI uyumlu `/chat/completions` adaptörü; istek iptali ve sınırlandırılmış sohbet bağlamı.
 - Tarayıcı Web Speech API üzerinden tek seferlik Türkçe konuşma tanıma ve isteğe bağlı konuşma sentezi. Destek, sesin nerede işlendiği ve mikrofon izinleri tarayıcıya bağlıdır; yerel/çevrimdışı tanıma garantisi yoktur. Sürekli dinleme yoktur.
 - Sunucu üzerinden Türkçe Vikipedi araması ve gerçek sayfa giriş metinleri; bağlantılı raporu Markdown olarak indirme. Bu bir başlangıç kaynak araştırmasıdır: kapsamlı web araması, doğrulama, çelişki analizi ve model tarafından sentezleme **yapmaz**.
-- Araştırma görevi için oturum içi durum ve iptal. Sohbet geçmişi ve tercihler tarayıcının localStorage alanında, Supabase hafızaları ise giriş yapmış kullanıcının projesinde tutulur. Sohbet ve hafıza ayrı silinir.
+- Araştırma görevi için oturum içi durum ve iptal. Sohbetler ve tercihler tarayıcının localStorage alanında tutulur. Giriş yapan kullanıcı sohbetin bir anlık görüntüsünü açık onayla buluta kopyalayabilir, diğer cihazda listeleyip içe aktarabilir veya bulut kopyasını kalıcı silebilir. Yerel ve bulut silme ayrıdır; bu otomatik senkronizasyon veya çatışma çözümü değildir. Görünüm/ses tercihleri ayrı onaylarla buluta yazılabilir veya cihazda uygulanabilir; sağlayıcı/model ve anahtarlar aktarılmaz. Supabase hafızaları giriş yapmış kullanıcının projesinde tutulur. Sohbet ve hafıza ayrı silinir.
 - Hata mesajları, testler ve RLS migration dosyası.
 
 ## Bilinen önemli eksikler
 
 - Windows/macOS/Linux için Tauri/Electron kabuğu veya Android/iOS için native paket **yoktur**; yalnızca uyumlu web arayüzü vardır. Bu platformlarda native derleme ve cihaz testleri yapılmadı.
 - Bilgisayar kontrolü, yapılandırılmış araç çağrıları, dosya/uygulama kontrolü, onay sistemi ve çok adımlı otonom görev yürütücüsü uygulanmadı. Model çıktıları işletim sistemi komutu olarak çalıştırılmaz.
-- Hafızalar dışında sohbet, tercihler, görevler ve raporların Supabase üzerinden eşitlenmesi yoktur. Görev geçmişi sayfa yenilenince kaybolur. Hesap silme akışı ve sunucu tarafı kapsamlı veri dışa aktarma yoktur; indirme sadece arayüzde görünen yerel geçmiş, ayar ve yüklenmiş hafızaları içerir.
+- Sohbet ve tercih aktarımı manueldir; görevler ve raporların Supabase üzerinden eşitlenmesi yoktur. Görev geçmişi sayfa yenilenince kaybolur. Hesap silme akışı ve sunucu tarafı kapsamlı veri dışa aktarma yoktur; indirme sadece arayüzde görünen yerel geçmiş, ayar ve yüklenmiş hafızaları içerir.
 - Mikrofon cihazı seçimi, ses seviyesi, kapsamlı dil/arka plan/panel yerleşimi ayarları, model indirme arayüzü, yanıt akışı, sağlayıcı model listesi ve bağımsız sağlayıcı bağlantı testi yoktur.
 - Gerçek Ollama, Supabase, OpenAI veya Wikipedia bağlantıları bu ortamda doğrulanmadı. Testlerde kullanılan sahte Ollama gerçek servis doğrulaması değildir.
 
@@ -67,4 +67,4 @@ npm run build
 npm audit
 ```
 
-Node testleri doğrulama, hata mesajları, köken kontrolü ve sahte Ollama ile API bağlantısını; jsdom testleri temel gezinme ve ayar kalıcılığını kapsar. Bunlar gerçek mobil/masaüstü cihaz, mikrofon, internet araştırması, gerçek Supabase RLS veya gerçek sağlayıcı entegrasyon testlerinin yerine geçmez.
+Node testleri doğrulama, hata mesajları, köken kontrolü, sahte Ollama ile API bağlantısını ve sahte Supabase adaptörüyle senkronizasyon kurallarını; jsdom testleri temel gezinme ve ayar kalıcılığını kapsar. Bunlar gerçek mobil/masaüstü cihaz, mikrofon, internet araştırması, gerçek Supabase RLS veya gerçek sağlayıcı entegrasyon testlerinin yerine geçmez.
