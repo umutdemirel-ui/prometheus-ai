@@ -5,11 +5,13 @@ from __future__ import annotations
 import difflib
 import os
 import platform
+import re
+import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import psutil
 
@@ -215,6 +217,29 @@ BUILTIN_APP_ALIASES: Dict[str, Dict[str, Any]] = {
 }
 
 
+def split_command_target(raw: str) -> Tuple[str, List[str]]:
+    """Safely split an executable path (even with spaces) from its CLI arguments."""
+    text = raw.strip()
+    if not text:
+        return "", []
+    if text.startswith('"'):
+        parts = shlex.split(text, posix=False)
+        exe = parts[0].strip('"')
+        args = [p.strip('"') for p in parts[1:]]
+        return exe, args
+    if Path(text).exists():
+        return text, []
+    exe_match = re.search(r"\.exe(?=\s|$)", text, flags=re.IGNORECASE)
+    if exe_match:
+        end = exe_match.end()
+        exe = text[:end].strip().strip('"')
+        rest = text[end:].strip()
+        args = [p.strip('"') for p in shlex.split(rest, posix=False)] if rest else []
+        return exe, args
+    parts = shlex.split(text, posix=False)
+    return parts[0].strip('"'), [p.strip('"') for p in parts[1:]]
+
+
 class AppLauncher:
     """Discovers and launches applications across Windows, macOS, and Linux."""
 
@@ -290,10 +315,14 @@ class AppLauncher:
                                 with winreg.OpenKey(key_handle, sub_name) as sub_key:
                                     val, _ = winreg.QueryValueEx(sub_key, "")
                                     stem = normalize_ascii(Path(sub_name).stem)
-                                    if stem and val and stem not in apps:
+                                    expanded = os.path.expandvars(str(val).strip().strip('"'))
+                                    exe_only, _ = split_command_target(expanded)
+                                    if stem and expanded and stem not in apps and (
+                                        Path(exe_only).exists() or shutil.which(exe_only)
+                                    ):
                                         apps[stem] = AppEntry(
                                             name=Path(sub_name).stem,
-                                            launch_target=str(val).strip('"'),
+                                            launch_target=expanded,
                                             kind="executable",
                                         )
                             except OSError:
@@ -407,20 +436,23 @@ class AppLauncher:
                         return AppEntry(name=canonical, launch_target=expanded, kind="uri")
                     if self.system == "darwin":
                         return AppEntry(name=expanded, launch_target=expanded, kind="mac_app")
-                    exe_part = expanded.split()[0]
-                    if Path(exe_part).exists() or shutil.which(exe_part):
+                    exe_part, _ = split_command_target(expanded)
+                    if (exe_part and Path(exe_part).exists()) or shutil.which(exe_part):
                         return AppEntry(name=canonical, launch_target=expanded, kind="executable")
                 # Check discovered installed apps by canonical name before falling back
                 discovered = self.discover_apps()
                 if canonical in discovered:
                     return discovered[canonical]
-                # Return bare command name only if it has no missing explicit path separator
-                if candidates and ("\\" not in candidates[0] and "/" not in candidates[0]):
-                    return AppEntry(
-                        name=canonical,
-                        launch_target=os.path.expandvars(candidates[0]),
-                        kind="executable",
-                    )
+                # Return bare command name only if it exists on PATH
+                for cand in candidates:
+                    if "\\" not in cand and "/" not in cand:
+                        cmd_only, _ = split_command_target(cand)
+                        if shutil.which(cmd_only):
+                            return AppEntry(
+                                name=canonical,
+                                launch_target=cand,
+                                kind="executable",
+                            )
 
         # 3. Discovered installed apps (exact, substring, fuzzy)
         discovered = self.discover_apps()
@@ -451,28 +483,17 @@ class AppLauncher:
         target_name = entry.name if entry else clean_target_phrase(query)
 
         if entry is None:
-            # On Windows, `start "" "<query>"` can still launch protocol/registered executables
-            if self.system == "windows" and target_name:
-                try:
-                    subprocess.Popen(
-                        f'start "" "{target_name}"',
-                        shell=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                    return {
-                        "ok": True,
-                        "app": target_name,
-                        "target": target_name,
-                        "simulated": False,
-                    }
-                except Exception as exc:
-                    return {"ok": False, "app": target_name, "error": str(exc)}
-            return {
-                "ok": False,
-                "app": target_name,
-                "error": f"'{target_name}' sistemde bulunamadı. Özel Uygulama Ekle bölümünden yolunu tanımlayabilirsiniz.",
-            }
+            # Check if target is directly on PATH or an existing file path before failing
+            if target_name:
+                expanded = os.path.expandvars(target_name).strip('"')
+                if Path(expanded).exists() or shutil.which(expanded):
+                    entry = AppEntry(name=target_name, launch_target=expanded, kind="executable")
+            if entry is None:
+                return {
+                    "ok": False,
+                    "app": target_name,
+                    "error": f"'{target_name}' sistemde bulunamadı. Özel Uygulama Ekle bölümünden .exe yolunu tanımlayabilirsiniz.",
+                }
 
         if not self.has_desktop_display():
             return {
@@ -485,15 +506,31 @@ class AppLauncher:
 
         try:
             if self.system == "windows":
-                if entry.kind in ("shortcut", "uri") or entry.launch_target.startswith("shell:"):
-                    os.startfile(entry.launch_target)  # type: ignore[attr-defined]
+                expanded_target = os.path.expandvars(entry.launch_target).strip()
+                if (
+                    entry.kind in ("shortcut", "uri")
+                    or expanded_target.startswith("shell:")
+                    or expanded_target.endswith(":")
+                ):
+                    os.startfile(expanded_target)  # type: ignore[attr-defined]
                 else:
-                    subprocess.Popen(
-                        entry.launch_target,
-                        shell=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
+                    exe_path, args = split_command_target(expanded_target)
+                    resolved_exe = shutil.which(exe_path) or exe_path
+                    if not Path(resolved_exe).exists() and not shutil.which(exe_path):
+                        return {
+                            "ok": False,
+                            "app": entry.name,
+                            "error": f"Uygulama yolu bulunamadı: {resolved_exe}",
+                        }
+                    if not args:
+                        os.startfile(resolved_exe)  # type: ignore[attr-defined]
+                    else:
+                        subprocess.Popen(
+                            [resolved_exe, *args],
+                            shell=False,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
             elif self.system == "darwin":
                 subprocess.Popen(
                     ["open", "-a", entry.launch_target],

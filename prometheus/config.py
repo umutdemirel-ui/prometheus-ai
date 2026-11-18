@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 from pydantic import BaseModel, Field
@@ -11,9 +12,21 @@ from pydantic import BaseModel, Field
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"))
-_DEFAULT_DATA_DIR = (
-    Path("/tmp/prometheus_data") if IS_VERCEL else (BASE_DIR / "data")
-)
+IS_FROZEN = bool(getattr(sys, "frozen", False))
+
+
+def _resolve_default_data_dir() -> Path:
+    if IS_VERCEL:
+        return Path("/tmp/prometheus_data")
+    if IS_FROZEN:
+        if os.name == "nt":
+            base = Path(os.environ.get("LOCALAPPDATA", str(Path.home())))
+            return base / "PrometheusAI"
+        return Path.home() / ".prometheus_ai"
+    return BASE_DIR / "data"
+
+
+_DEFAULT_DATA_DIR = _resolve_default_data_dir()
 DATA_DIR = Path(os.environ.get("PROMETHEUS_DATA_DIR", str(_DEFAULT_DATA_DIR)))
 CONFIG_PATH = DATA_DIR / "config.json"
 

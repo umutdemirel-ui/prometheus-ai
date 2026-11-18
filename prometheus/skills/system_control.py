@@ -200,15 +200,7 @@ class SystemControl:
             return {"ok": False, "error": str(exc)}
 
     def create_folder(self, name: str, location: str = "desktop") -> Dict[str, Any]:
-        base_map = {
-            "desktop": Path.home() / "Desktop",
-            "masaustu": Path.home() / "Desktop",
-            "documents": Path.home() / "Documents",
-            "belgeler": Path.home() / "Documents",
-            "downloads": Path.home() / "Downloads",
-            "indirilenler": Path.home() / "Downloads",
-        }
-        base = base_map.get(location.lower(), Path.home() / "Desktop")
+        base = self._resolve_special_folder(location)
         target = base / name.strip()
         try:
             target.mkdir(parents=True, exist_ok=True)
@@ -221,7 +213,11 @@ class SystemControl:
         if not q:
             return []
         found: List[str] = []
-        roots = [Path.home() / "Desktop", Path.home() / "Documents", Path.home() / "Downloads"]
+        roots = [
+            self._resolve_special_folder("desktop"),
+            self._resolve_special_folder("documents"),
+            self._resolve_special_folder("downloads"),
+        ]
         for root in roots:
             if not root.exists():
                 continue
@@ -287,23 +283,51 @@ class SystemControl:
             }
         return {"ok": False, "error": "Ekran görüntüsü alınamadı."}
 
-    def open_folder(self, folder_name: str) -> Dict[str, Any]:
-        mapping = {
-            "desktop": Path.home() / "Desktop",
-            "masaustu": Path.home() / "Desktop",
-            "downloads": Path.home() / "Downloads",
-            "indirilenler": Path.home() / "Downloads",
-            "documents": Path.home() / "Documents",
-            "belgeler": Path.home() / "Documents",
-            "pictures": Path.home() / "Pictures",
-            "resimler": Path.home() / "Pictures",
-            "music": Path.home() / "Music",
-            "muzik": Path.home() / "Music",
-            "home": Path.home(),
-            "kullanici": Path.home(),
+    def _resolve_special_folder(self, key: str) -> Path:
+        norm = key.strip().lower()
+        alias_to_win = {
+            "desktop": ("Desktop", "Desktop"),
+            "masaustu": ("Desktop", "Desktop"),
+            "downloads": ("{374DE290-123F-4565-9164-39C4925E467B}", "Downloads"),
+            "indirilenler": ("{374DE290-123F-4565-9164-39C4925E467B}", "Downloads"),
+            "documents": ("Personal", "Documents"),
+            "belgeler": ("Personal", "Documents"),
+            "pictures": ("My Pictures", "Pictures"),
+            "resimler": ("My Pictures", "Pictures"),
+            "music": ("My Music", "Music"),
+            "muzik": ("My Music", "Music"),
+            "home": ("", ""),
+            "kullanici": ("", ""),
         }
-        key = folder_name.strip().lower()
-        target = mapping.get(key, Path(folder_name).expanduser())
+        if norm in alias_to_win:
+            reg_key, fallback_sub = alias_to_win[norm]
+            if not fallback_sub:
+                return Path.home()
+            if self.system == "windows" and reg_key:
+                try:
+                    import winreg  # type: ignore
+
+                    with winreg.OpenKey(
+                        winreg.HKEY_CURRENT_USER,
+                        r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders",
+                    ) as k:
+                        val, _ = winreg.QueryValueEx(k, reg_key)
+                        p = Path(os.path.expandvars(str(val)))
+                        if p.exists():
+                            return p
+                except OSError:
+                    pass
+                # OneDrive fallback check
+                onedrive = os.environ.get("OneDrive") or os.environ.get("OneDriveConsumer")
+                if onedrive:
+                    od_path = Path(onedrive) / fallback_sub
+                    if od_path.exists():
+                        return od_path
+            return Path.home() / fallback_sub
+        return Path(os.path.expandvars(key)).expanduser()
+
+    def open_folder(self, folder_name: str) -> Dict[str, Any]:
+        target = self._resolve_special_folder(folder_name)
         if not target.exists():
             return {"ok": False, "error": f"Klasör bulunamadı: {target}"}
 

@@ -41,10 +41,20 @@ def _wait_for_server(url: str, timeout: float = 15.0) -> bool:
     return False
 
 
+def _ensure_stdio() -> None:
+    """PyInstaller --windowed builds on Windows set sys.stdout/stderr to None."""
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
+
 def _find_chromium_app_binary() -> Optional[str]:
     sys_name = platform.system().lower()
     if sys_name == "windows":
         candidates = [
+            shutil.which("msedge"),
+            shutil.which("chrome"),
             os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
             os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
             os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
@@ -53,8 +63,26 @@ def _find_chromium_app_binary() -> Optional[str]:
             os.path.expandvars(r"%LocalAppData%\BraveSoftware\Brave-Browser\Application\brave.exe"),
         ]
         for c in candidates:
-            if Path(c).exists():
+            if c and Path(c).exists():
                 return c
+        try:
+            import winreg  # type: ignore
+
+            for exe in ("chrome.exe", "msedge.exe"):
+                for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+                    try:
+                        with winreg.OpenKey(
+                            hive,
+                            rf"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{exe}",
+                        ) as k:
+                            val, _ = winreg.QueryValueEx(k, "")
+                            expanded = os.path.expandvars(str(val).strip('"'))
+                            if expanded and Path(expanded).exists():
+                                return expanded
+                    except OSError:
+                        continue
+        except ImportError:
+            pass
     elif sys_name == "darwin":
         candidates = [
             "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -73,6 +101,7 @@ def _find_chromium_app_binary() -> Optional[str]:
 
 
 def launch_desktop(port: Optional[int] = None) -> None:
+    _ensure_stdio()
     chosen_port = port or _find_free_port(8765)
     url = f"http://127.0.0.1:{chosen_port}"
 
@@ -83,6 +112,7 @@ def launch_desktop(port: Optional[int] = None) -> None:
         host="127.0.0.1",
         port=chosen_port,
         log_level="warning",
+        log_config=None,
     )
     server = uvicorn.Server(config)
 
