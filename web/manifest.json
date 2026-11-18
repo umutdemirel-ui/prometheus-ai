@@ -1,0 +1,24 @@
+{
+  "name": "Prometheus AI — Personal Desktop Core",
+  "short_name": "Prometheus AI",
+  "description": "Tony Stark JARVIS esintili tam yetkili, ücretsiz ve sesli kişisel yapay zeka masaüstü asistanı.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#040811",
+  "theme_color": "#040811",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

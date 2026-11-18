@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#040811" />
+  <title>PROMETHEUS // Personal AI Core</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/static/icon-192.png" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="hud-grid"></div>
+  <div class="hud-vignette"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div>
+        <h1>PROMETHEUS <span class="badge-mark">AI CORE v1.0</span></h1>
+        <p class="subtitle">TAM YETKİLİ &amp; ÜCRETSİZ KİŞİSEL YAPAY ZEKA ASİSTANI</p>
+      </div>
+    </div>
+
+    <div class="status-controls">
+      <div id="connStatus" class="pill pill-online">
+        <span class="dot"></span>
+        <span id="connLabel">BAĞLANIYOR</span>
+      </div>
+
+      <label class="toggle-chip" title="Bilgisayarda tam terminal, güç ve uygulama yetkisi">
+        <input type="checkbox" id="toggleAuthority" checked />
+        <span class="chip-label">⚡ TAM YETKİ</span>
+      </label>
+
+      <label class="toggle-chip" title="Açıkken 'Prometheus ...' diyerek tetiklenir. Kapalıyken her cümle doğrudan komut olur.">
+        <input type="checkbox" id="toggleWakeWord" checked />
+        <span class="chip-label">🎙️ "PROMETHEUS" UYANDIRMA</span>
+      </label>
+
+      <label class="toggle-chip" title="Sesli yanıtları aç/kapat">
+        <input type="checkbox" id="toggleTTS" checked />
+        <span class="chip-label">🔊 SESLİ YANIT</span>
+      </label>
+
+      <select id="langSelect" class="hud-select" title="Konuşma &amp; Algılama Dili">
+        <option value="tr-TR">TR · Türkçe</option>
+        <option value="en-US">EN · English</option>
+      </select>
+
+      <button id="btnInstallDesktop" class="hud-btn hidden" title="Prometheus AI'yı bağımsız masaüstü uygulaması olarak kur">
+        💻 Masaüstü Kur
+      </button>
+
+      <button id="btnSettings" class="hud-btn" title="Özel Uygulamalar, Siteler ve Ses Ayarları">
+        ⚙️ Ayarlar
+      </button>
+    </div>
+  </header>
+
+  <main class="hud-layout">
+    <!-- LEFT PANEL: TELEMETRY & QUICK LAUNCH -->
+    <aside class="panel left-panel">
+      <section class="card">
+        <div class="card-header">
+          <h2>SİSTEM TELEMETRİSİ</h2>
+          <span id="osTag" class="mini-tag">—</span>
+        </div>
+        <div class="telemetry-grid">
+          <div class="metric">
+            <div class="metric-head"><span>CPU</span><span id="cpuVal">0%</span></div>
+            <div class="bar"><div id="cpuBar" class="bar-fill"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span>RAM</span><span id="ramVal">0%</span></div>
+            <div class="bar"><div id="ramBar" class="bar-fill"></div></div>
+            <div id="ramSub" class="metric-sub">0 / 0 GB</div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span>DİSK</span><span id="diskVal">0%</span></div>
+            <div class="bar"><div id="diskBar" class="bar-fill"></div></div>
+          </div>
+        </div>
+        <div class="sys-meta-row">
+          <span id="hostMeta">Host: —</span>
+          <span id="uptimeMeta">Çalışma: —</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>HIZLI KOMUTLAR</h2>
+          <span class="mini-tag">1-TIK</span>
+        </div>
+        <div class="quick-grid">
+          <button class="q-btn" data-cmd="YouTube'u aç">▶ YouTube</button>
+          <button class="q-btn" data-cmd="Google'ı aç">🔍 Google</button>
+          <button class="q-btn" data-cmd="GitHub'ı aç">💻 GitHub</button>
+          <button class="q-btn" data-cmd="ChatGPT'yi aç">🤖 ChatGPT</button>
+          <button class="q-btn" data-cmd="Hesap makinesini aç">🧮 Hesap Mak.</button>
+          <button class="q-btn" data-cmd="Terminali aç">⌨️ Terminal</button>
+          <button class="q-btn" data-cmd="Sistem durumu">📊 Sistem</button>
+          <button class="q-btn" data-cmd="Ekran görüntüsü al">📸 Ekran G.</button>
+          <button class="q-btn" data-cmd="Saat kaç">🕒 Saat</button>
+          <button class="q-btn" data-cmd="İstanbul'da hava durumu">🌤️ Hava</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>AKTİF ZAMANLAYICILAR</h2>
+          <span id="timerCount" class="mini-tag">0</span>
+        </div>
+        <div id="timerList" class="compact-list empty-hint">Aktif zamanlayıcı yok.</div>
+      </section>
+    </aside>
+
+    <!-- CENTER PANEL: ARC REACTOR CORE + VOICE + TERMINAL LOG -->
+    <section class="center-panel">
+      <div class="reactor-stage">
+        <canvas id="visualizerCanvas" width="380" height="380"></canvas>
+        <button id="coreButton" class="arc-reactor" title="Sesli komutu başlat/durdur (Boşluk tuşu)">
+          <div class="ring ring-outer"></div>
+          <div class="ring ring-mid"></div>
+          <div class="ring ring-inner"></div>
+          <div class="core-center">
+            <span class="core-icon" id="coreIcon">🎙️</span>
+            <span class="core-state" id="coreStateText">BAŞLAT</span>
+          </div>
+        </button>
+
+        <div class="transcript-box">
+          <div id="voiceHint" class="voice-hint">
+            Mikrofonu başlatmak için çekirdeğe tıklayın veya <strong>Boşluk</strong> tuşuna basın.
+          </div>
+          <div id="liveTranscript" class="live-transcript"></div>
+        </div>
+      </div>
+
+      <form id="commandForm" class="command-bar">
+        <input
+          id="commandInput"
+          type="text"
+          autocomplete="off"
+          placeholder="Komut yazın... (Örn: 'YouTube'da Duman ara', 'Discord başlat', 'komut çalıştır: whoami')"
+        />
+        <button type="button" id="btnMicInline" class="bar-btn bar-mic" title="Mikrofon Aç/Kapat">🎙️</button>
+        <button type="submit" class="bar-btn bar-send">GÖNDER</button>
+      </form>
+
+      <div class="card log-card">
+        <div class="card-header">
+          <h2>PROMETHEUS KOMUT GÜNLÜĞÜ</h2>
+          <button id="btnClearLog" class="mini-action">Temizle</button>
+        </div>
+        <div id="chatLog" class="chat-log"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: NOTES + APPS/PROCESSES -->
+    <aside class="panel right-panel">
+      <section class="card">
+        <div class="card-header">
+          <h2>NOTLAR &amp; HAFIZA</h2>
+          <span id="noteCount" class="mini-tag">0</span>
+        </div>
+        <div class="note-quick-add">
+          <input id="quickNoteInput" type="text" placeholder="Hızlı not ekle..." />
+          <button id="btnQuickNote">+</button>
+        </div>
+        <div id="notesList" class="compact-list"></div>
+      </section>
+
+      <section class="card apps-card">
+        <div class="card-header">
+          <div class="tab-group">
+            <button class="tab-btn active" data-tab="apps">UYGULAMALAR</button>
+            <button class="tab-btn" data-tab="procs">SÜREÇLER</button>
+          </div>
+          <button id="btnRefreshApps" class="mini-action" title="Listeyi Yenile">↻</button>
+        </div>
+        <input id="appSearch" type="text" class="search-input" placeholder="Program ara..." />
+        <div id="appsList" class="apps-list"></div>
+        <div id="procsList" class="apps-list hidden"></div>
+      </section>
+    </aside>
+  </main>
+
+  <!-- SETTINGS & CUSTOM COMMANDS MODAL -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ PROMETHEUS SİSTEM AYARLARI &amp; ÖZEL KOMUTLAR</h2>
+        <button id="btnCloseModal" class="mini-action">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <h3>Ses &amp; Yapay Zeka Motoru (%100 Ücretsiz)</h3>
+          <div class="form-row">
+            <label>Türkçe Ses (Neural Edge-TTS)</label>
+            <select id="voiceTrSelect" class="hud-select">
+              <option value="tr-TR-AhmetNeural">Ahmet (Erkek · JARVIS Tarzı)</option>
+              <option value="tr-TR-EmelNeural">Emel (Kadın)</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>İngilizce Ses (Neural Edge-TTS)</label>
+            <select id="voiceEnSelect" class="hud-select">
+              <option value="en-GB-RyanNeural">Ryan (British JARVIS)</option>
+              <option value="en-US-GuyNeural">Guy (US Male)</option>
+              <option value="en-GB-SoniaNeural">Sonia (British Female)</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Ücretsiz Yerel AI (Ollama URL / Model)</label>
+            <div class="inline-pair">
+              <input id="ollamaUrlInput" type="text" placeholder="http://localhost:11434" />
+              <input id="ollamaModelInput" type="text" placeholder="llama3.2" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label>Yerel PC Köprüsü (Opsiyonel — Vercel Masaüstü Uygulamasından yerel PC'yi yönetmek için)</label>
+            <input id="localBridgeInput" type="text" placeholder="Örn: http://127.0.0.1:8000 (boş = aktif sunucu)" />
+          </div>
+          <div class="form-row">
+            <label class="checkbox-inline">
+              <input type="checkbox" id="confirmPowerToggle" checked />
+              Bilgisayarı kapatma/yeniden başlatmada sesli onay iste
+            </label>
+          </div>
+          <button id="btnSaveSettings" class="bar-btn bar-send">Ayarları Kaydet</button>
+        </div>
+
+        <div class="settings-section">
+          <h3>Özel Uygulama Ekle (Bilgisayarındaki Herhangi Bir .exe / Program)</h3>
+          <div class="inline-pair">
+            <input id="customAppName" type="text" placeholder="Sesli ad (örn: oyunum)" />
+            <input id="customAppPath" type="text" placeholder="Yol (örn: C:\Games\oyun.exe)" />
+            <button id="btnAddCustomApp" class="hud-btn">Ekle</button>
+          </div>
+          <div id="customAppsList" class="tag-list"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Özel Web Sitesi Ekle</h3>
+          <div class="inline-pair">
+            <input id="customSiteName" type="text" placeholder="Kısa ad (örn: okul)" />
+            <input id="customSiteUrl" type="text" placeholder="URL (örn: https://obs.okul.edu.tr)" />
+            <button id="btnAddCustomSite" class="hud-btn">Ekle</button>
+          </div>
+          <div id="customSitesList" class="tag-list"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Özel Sesli Makro / Terminal Komutu Ekle</h3>
+          <div class="inline-pair">
+            <input id="customCmdTrigger" type="text" placeholder="Tetikleyici (örn: çalışma modu)" />
+            <input id="customCmdAction" type="text" placeholder="Komut (örn: code . && start chrome)" />
+            <button id="btnAddCustomCmd" class="hud-btn">Ekle</button>
+          </div>
+          <div id="customCmdsList" class="tag-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

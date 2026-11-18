@@ -1,0 +1,6 @@
+# Optional packages for headless local desktop microphone / offline STT / GUI automation
+SpeechRecognition>=3.10.4
+PyAudio>=0.2.14
+pyautogui>=0.9.54
+pyttsx3>=2.91
+faster-whisper>=1.0.3
