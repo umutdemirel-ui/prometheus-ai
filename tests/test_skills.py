@@ -42,3 +42,17 @@ def test_system_telemetry_and_memory_timers(tmp_path: Path):
     due = mem.poll_due_timers()
     assert len(due) == 1
     assert due[0]["label"] == "Test"
+
+
+def test_folder_create_and_find(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    (tmp_path / "Desktop").mkdir()
+    sys_ctrl = SystemControl()
+    res = sys_ctrl.create_folder("PrometheusTest", location="desktop")
+    assert res["ok"] is True
+    target = tmp_path / "Desktop" / "PrometheusTest"
+    assert target.exists()
+    (target / "rapor.txt").write_text("ok", encoding="utf-8")
+    found = sys_ctrl.find_files("rapor")
+    assert len(found) == 1
+

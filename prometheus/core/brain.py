@@ -269,7 +269,7 @@ class PrometheusBrain:
             res = self.sys.media_control("prev")
             return self._finish(text, "media_prev", f"Önceki parçaya dönüldü, {title}.", res.get("ok", False), lang, res)
 
-        # 8. Screenshot
+        # 8. Screenshot, Brightness, Type Text, Folder Create
         if any(p in norm for p in ("ekran goruntusu", "ss al", "screenshot")):
             res = self.sys.take_screenshot()
             msg = (
@@ -278,6 +278,41 @@ class PrometheusBrain:
                 else f"Ekran görüntüsü alınamadı: {res.get('error')}"
             )
             return self._finish(text, "screenshot", msg, res.get("ok", False), lang, res)
+
+        if any(w in norm for w in ("parlaklik", "parlakligi", "brightness")):
+            num = extract_number(text)
+            if num is not None:
+                lvl = max(0, min(100, int(num)))
+                res = self.sys.set_brightness(lvl)
+                msg = f"Ekran parlaklığı yüzde {lvl} yapıldı, {title}."
+                return self._finish(text, "brightness_set", msg, res.get("ok", False), lang, res)
+
+        if re.match(r"^(?:yaz|klavye yaz|type)\s*:\s*(.+)$", text.strip(), flags=re.IGNORECASE):
+            content = text.split(":", 1)[1].strip()
+            res = self.sys.type_text(content)
+            msg = f"Metin yazıldı, {title}." if res.get("ok") else res.get("error", "Yazılamadı.")
+            return self._finish(text, "type_text", msg, res.get("ok", False), lang, res)
+
+        folder_create_m = re.match(
+            r"^(?:masaustunde|belgelerde|indirilenlerde)?\s*(.+?)\s+(?:klasoru|klasor)\s+(?:olustur|ac)$",
+            norm,
+        )
+        if folder_create_m and ("olustur" in norm):
+            loc = "documents" if "belge" in norm else ("downloads" if "indir" in norm else "desktop")
+            fname = folder_create_m.group(1).strip()
+            res = self.sys.create_folder(fname, location=loc)
+            msg = f"'{fname}' klasörü oluşturuldu, {title}." if res.get("ok") else res.get("error", "Hata")
+            return self._finish(text, "create_folder", msg, res.get("ok", False), lang, res)
+
+        file_find_m = re.match(r"^(.+?)\s+dosyasini\s+(?:bul|ara)$", norm)
+        if file_find_m:
+            q = file_find_m.group(1).strip()
+            matches = self.sys.find_files(q)
+            if matches:
+                msg = f"{len(matches)} dosya bulundu {title}: " + "; ".join(matches[:3])
+            else:
+                msg = f"'{q}' adlı dosya bulunamadı, {title}."
+            return self._finish(text, "find_files", msg, bool(matches), lang, {"files": matches})
 
         # 9. System Telemetry & Running/Installed Apps
         if any(p in norm for p in ("sistem durumu", "sistem bilgisi", "cpu kac", "ram kac", "system status", "telemetry")):

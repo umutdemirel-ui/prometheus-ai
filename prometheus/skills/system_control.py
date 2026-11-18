@@ -184,6 +184,63 @@ class SystemControl:
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
 
+    def set_brightness(self, level: int) -> Dict[str, Any]:
+        lvl = max(0, min(100, int(level)))
+        try:
+            if self.system == "windows":
+                ps = f"(Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods).WmiSetBrightness(1, {lvl})"
+                subprocess.Popen(["powershell", "-NoProfile", "-Command", ps], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                return {"ok": True, "level": lvl}
+            if self.system == "darwin":
+                subprocess.run(["osascript", "-e", f"tell application \"System Events\" to set value of slider 1 of group 1 of window 1 of process \"ControlCenter\" to {lvl/100}"], check=False, capture_output=True)
+                return {"ok": True, "level": lvl}
+            subprocess.run(["brightnessctl", "set", f"{lvl}%"], check=False, capture_output=True)
+            return {"ok": True, "level": lvl}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def create_folder(self, name: str, location: str = "desktop") -> Dict[str, Any]:
+        base_map = {
+            "desktop": Path.home() / "Desktop",
+            "masaustu": Path.home() / "Desktop",
+            "documents": Path.home() / "Documents",
+            "belgeler": Path.home() / "Documents",
+            "downloads": Path.home() / "Downloads",
+            "indirilenler": Path.home() / "Downloads",
+        }
+        base = base_map.get(location.lower(), Path.home() / "Desktop")
+        target = base / name.strip()
+        try:
+            target.mkdir(parents=True, exist_ok=True)
+            return {"ok": True, "path": str(target)}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def find_files(self, query: str, limit: int = 8) -> List[str]:
+        q = query.strip().lower()
+        if not q:
+            return []
+        found: List[str] = []
+        roots = [Path.home() / "Desktop", Path.home() / "Documents", Path.home() / "Downloads"]
+        for root in roots:
+            if not root.exists():
+                continue
+            for item in root.rglob("*"):
+                if q in item.name.lower():
+                    found.append(str(item))
+                    if len(found) >= limit:
+                        return found
+        return found
+
+    def type_text(self, content: str) -> Dict[str, Any]:
+        try:
+            import pyautogui  # type: ignore
+
+            pyautogui.write(content, interval=0.02)
+            return {"ok": True, "typed": content}
+        except Exception as exc:
+            return {"ok": False, "error": f"Yazma otomasyonu için pyautogui gerekli: {exc}"}
+
     def take_screenshot(self) -> Dict[str, Any]:
         shot_dir = DATA_DIR / "screenshots"
         shot_dir.mkdir(parents=True, exist_ok=True)

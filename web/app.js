@@ -291,7 +291,7 @@
     };
 
     try {
-      const res = await fetch("/api/tts", {
+      const res = await fetch(`${apiBase()}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, language: lang }),
@@ -774,7 +774,7 @@
       const btn = document.createElement("button");
       btn.textContent = "✕";
       btn.onclick = async () => {
-        await fetch(`/api/notes/${n.id}`, { method: "DELETE" });
+        await fetch(`${apiBase()}/api/notes/${n.id}`, { method: "DELETE" });
         refreshNotes();
       };
       row.append(span, btn);
@@ -824,7 +824,7 @@
       const del = document.createElement("button");
       del.textContent = "✕";
       del.onclick = async () => {
-        const res = await fetch(`/api/custom/${kind}/${encodeURIComponent(k)}`, { method: "DELETE" });
+        const res = await fetch(`${apiBase()}/api/custom/${kind}/${encodeURIComponent(k)}`, { method: "DELETE" });
         state.config = await res.json();
         syncSettingsUI();
       };
@@ -854,7 +854,7 @@
   }
 
   async function patchConfig(patch) {
-    const res = await fetch("/api/config", {
+    const res = await fetch(`${apiBase()}/api/config`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
@@ -864,13 +864,13 @@
   }
 
   async function refreshNotes() {
-    const res = await fetch("/api/notes");
+    const res = await fetch(`${apiBase()}/api/notes`);
     const data = await res.json();
     renderNotes(data.notes || []);
   }
 
   async function refreshApps(force = false) {
-    const res = await fetch(`/api/apps?refresh=${force ? "true" : "false"}`);
+    const res = await fetch(`${apiBase()}/api/apps?refresh=${force ? "true" : "false"}`);
     const data = await res.json();
     state.apps = data.apps || [];
     renderApps(state.apps, els.appSearch.value);
@@ -1051,7 +1051,7 @@
     const name = nameEl.value.trim();
     const target = targetEl.value.trim();
     if (!name || !target) return;
-    const res = await fetch(`/api/custom/${kind}`, {
+    const res = await fetch(`${apiBase()}/api/custom/${kind}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, target }),
