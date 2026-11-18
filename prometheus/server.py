@@ -21,8 +21,19 @@ from prometheus.core.nlp_utils import match_wake_word
 from prometheus.voice.tts import AVAILABLE_VOICES, EdgeTTSEngine
 
 
-_BASE_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
-WEB_DIR = _BASE_ROOT / "web"
+def _resolve_web_dir() -> Path:
+    candidates = [
+        Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent)) / "web",
+        Path(__file__).resolve().parent.parent / "web",
+        Path.cwd() / "web",
+    ]
+    for cand in candidates:
+        if (cand / "index.html").exists():
+            return cand
+    return candidates[0]
+
+
+WEB_DIR = _resolve_web_dir()
 
 app = FastAPI(title="Prometheus AI", version=__version__)
 
